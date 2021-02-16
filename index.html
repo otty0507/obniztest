@@ -1,0 +1,74 @@
+<!-- HTML Example -->
+<html>
+<head>
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://unpkg.com/obniz@3.12.0/obniz.js"></script>
+</head>
+<body>
+  <h1>Obniz動作チェック用のwebサイト</h1>
+  <small>このwebsサイトはDIYしたものであり公式のものではありません。</small>
+  <p id="IsOneline">未接続</p>
+  <p id="SwitchState">Obniz左上のスイッチのチェックもできます</p>
+  <p id="Version"></p>
+  <p id="Test">10秒後にモーター動作確認のテストをするよ！</p>
+  <p>0:左モーターの黒<br>1:左モーターの赤<br>2:赤外線距離センサーの黄色<br>3:赤外線距離センサーの黒<br>4:赤外線距離センサーの赤<br>10:右モーターの赤<br>11:右モーターの黒</p>
+
+  <script>
+    let obniz = new Obniz("OBNIZ_ID_HERE")
+    obniz.onconnect = async function () {
+      $("#IsOneline").text("ObnisIDが" + obniz.id + "でちゃんとつながったよ❤️")
+      obniz.display.print("ちゃんと")
+      obniz.display.print("つながったよ❤️")
+
+
+      obniz.switch.onchange = function (state) {
+        if (state === "push") {
+          $("#SwitchState").text("スイッチを押してるね")
+        } else if (state === "left") {
+          $("#SwitchState").text("左に倒しているね")
+        } else if (state === "right") {
+          $("#SwitchState").text("右に倒しているね")
+        } else {
+          $("#SwitchState").text("スイッチでは何もしていないね")
+        }
+      }
+      $("#Version").html("<p>ファームウェア:" + obniz.firmware_ver + "<br>ハードウェア:" + obniz.hw + "</p>")
+      for (i = 0; i < 100; i++) {
+        let distance = obniz.wired("Grove_DistanceSensor", { "vcc": 2, "gnd": 3, "signal": 4 })
+        $("#Test").text("距離センサー：" + (await distance.getWait()) + "mm")
+        console.log((await distance.getWait()))
+        await obniz.wait(100)
+      }
+      let motorL = obniz.wired("DCMotor", { forward: 0, back: 1 })
+      motorL.power(1000)
+      motorL.forward()
+      $("#Test").text("左(黒:0,赤:1)のタイヤ前回り")
+      await obniz.wait(1000)
+      motorL.reverse()
+      $("#Test").text("左(黒:0,赤:1)のタイヤ後ろ回り")
+      await obniz.wait(1000)
+      motorL.stop()
+
+      let motorR = obniz.wired("DCMotor", { forward: 10, back: 11 })
+      motorR.power(1000)
+      motorR.forward()
+      $("#Test").text("左(赤:10,黒:11)のタイヤ前回り")
+      await obniz.wait(1000)
+      motorR.reverse()
+      $("#Test").text("左(赤:10,黒:11)のタイヤ後ろ回り")
+      await obniz.wait(1000)
+      motorR.stop()
+      $("#Test").text("テスト完了。不具合はなかったかな？プログラムを書く前にブラウザを閉じよう！")
+
+
+      obniz.display.print("テスト完了")
+      await obniz.wait(1000)
+      obniz.display.clear()
+      obniz.display.print("この画面が出てい")
+      obniz.display.print("る時はメンターに")
+      obniz.display.print("言う。テスト完了")
+    }
+
+  </script>
+</body>
+</html>
